@@ -23,7 +23,7 @@ train_data = DataLoader(
             [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
         ),
     ),
-    batch_size=64,
+    batch_size=4,
     shuffle=True,
     **kwargs
 )
@@ -37,7 +37,7 @@ test_data = DataLoader(
             [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
         ),
     ),
-    batch_size=64,
+    batch_size=4,
     shuffle=True,
     **kwargs
 )
@@ -65,8 +65,6 @@ class Netz(nn.Module):
 
 model = Netz().to(device)
 
-optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
-
 
 def train(epoch):
     model.train()
@@ -79,7 +77,7 @@ def train(epoch):
         optimizer.step()
         if batch_idx % 10 == 0:
             print(
-                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
+                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {}".format(
                     epoch,
                     batch_idx * len(data),
                     len(train_data.dataset),
@@ -114,11 +112,17 @@ if os.path.isfile("model.pt"):
         inp = input("train? (y/n): ")
         if inp == "y":
             inp = input("how many epochs? (int): ")
+            lr = float(input("learning rate? (float): "))
+            momentum = float(input("momentum? (float): "))
+            optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
             for i in range(int(inp)):
                 train(int(i))
                 torch.save(model.state_dict(), "model.pt")
 else:
     inp = input("how many epochs? (int): ")
+    lr = float(input("learning rate? (float): "))
+    momentum = float(input("momentum? (float): "))
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
     for i in range(int(inp)):
         train(int(i))
         torch.save(model.state_dict(), "model.pt")
