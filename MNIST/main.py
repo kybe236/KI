@@ -1,3 +1,4 @@
+import base64
 import os
 import torch
 import torch.nn as nn
@@ -5,6 +6,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from torchvision import datasets, transforms
+from PIL import Image
 
 kwargs = {"num_workers": 1, "pin_memory": True} if torch.cuda.is_available() else {}
 device = (
@@ -103,11 +105,26 @@ def test():
     print(f"Test set: Average loss: {loss:.4f}, Accuracy: {accuracy:.0f}% Correct: {correct}")
 
 
+def test_file(image):
+    model.eval()
+    with torch.no_grad():
+        with Image.open(image) as imagefile:
+            data = transforms.ToTensor()(imagefile)
+            data = data.to(device)
+            output = model(data)
+            print(output)
+
+
 if os.path.isfile("model.pt"):
     inp = input("test? (y/n): ")
     model.load_state_dict(torch.load("model.pt"))
     if inp == "y":
-        test()
+        inp = input("test file? (y/n): ")
+        if inp == "y":
+            inp = input("file path: ")
+            test_file(inp)
+        else:
+            test()
     else:
         inp = input("train? (y/n): ")
         if inp == "y":
