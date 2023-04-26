@@ -9,18 +9,6 @@ from PIL import Image
 import random
 from matplotlib import pyplot as plt
 
-PATH = "data"
-img_list = os.listdir(PATH)
-
-PATH_TEST = "data_test"
-img_list_test = os.listdir(PATH_TEST)
-
-PATH_WRONG = "data_wrong"
-img_list_wrong = os.listdir(PATH_WRONG)
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"Using {device}")
-
 
 class Net(nn.Module):
     def __init__(self):
@@ -56,17 +44,12 @@ class Net(nn.Module):
         return x
 
 
-net = Net().to(device)
-
-losses = []
-
-
-def train(epochs):
+def train(epochs, lr=0.001):
     net.train()
     t = 0
     print("Training")
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(net.parameters(), lr=0.001)
+    optimizer = optim.Adam(net.parameters(), lr=lr)
 
     for epoch in range(epochs):
         torch.save(net.state_dict(), "model.pt")
@@ -76,7 +59,6 @@ def train(epochs):
         right = 0
         right_2 = [0]
         false = 0
-        false_2 = [0]
         epoch_loss = 0.0
         running_loss = 0.0
         for i in img_list:
@@ -117,13 +99,11 @@ def train(epochs):
             if t % 100 == 0:
                 print(f"epoch: {epoch} loss: {running_loss / 100} right: {right} false: {false}")
                 right_2.append(right)
-                false_2.append(false)
                 right = 0
                 false = 0
                 running_loss = 0.0
             if t % 1000 == 0:
                 plt.plot(right_2, label="right")
-                plt.xlim(0, 1000)
                 plt.autoscale(enable=True, axis="x", tight=True)
                 plt.show()
                 plt.savefig("loss.png")
@@ -135,7 +115,10 @@ def test():
     net.eval()
     right = 0
     false = 0
+    t = 0
     for i in img_list_test:
+        t = t + 1
+        print(t)
         img = Image.open(f"{PATH_TEST}/{i}").resize((250, 250)).convert("L")
         img = transforms.ToTensor()(img)
         img = img.unsqueeze(0).to(device)
@@ -163,8 +146,8 @@ def test_file():
     inp = input("File name: ")
     img = Image.open(f"{inp}").resize((250, 250)).convert("L")
     img = transforms.ToTensor()(img)
-    img = img.unsqueeze(0).to(device)
-    img = img[:3].to(device)
+    img = img.unsqueeze(1).to(device)
+    img = img[:4].to(device)
 
     outputs = net(img)
 
@@ -185,18 +168,34 @@ def main():
                 inp = input("Test file? (y/n) ")
                 if inp == "y":
                     test_file()
-                    sys.exit(0)
+                    sys.exit(1)
                 if inp == "n":
                     test()
-                    sys.exit(0)
+                    sys.exit(1)
 
     inp = input("Do you want to train the model? (y/n) ")
     if inp == "y":
 
         epochs = int(input("How many epochs? "))
-        train(epochs)
+        lr = float(input("Learning rate? "))
+        train(epochs, lr)
         sys.exit(0)
 
 
 if __name__ == "__main__":
+    PATH = "data"
+    img_list = os.listdir(PATH)
+
+    PATH_TEST = "data_test"
+    img_list_test = os.listdir(PATH_TEST)
+
+    PATH_WRONG = "data_wrong"
+    img_list_wrong = os.listdir(PATH_WRONG)
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    net = Net().to(device)
+
+    print(f"Using {device}")
+
     main()
