@@ -25,7 +25,7 @@ train_data = DataLoader(
             [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
         ),
     ),
-    batch_size=4,
+    batch_size=16,
     shuffle=True,
     **kwargs
 )
@@ -39,7 +39,7 @@ test_data = DataLoader(
             [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
         ),
     ),
-    batch_size=4,
+    batch_size=16,
     shuffle=True,
     **kwargs
 )
@@ -51,8 +51,9 @@ class Netz(nn.Module):
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
         self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
         self.conv_drop = nn.Dropout2d()
-        self.fc1 = nn.Linear(320, 50)
-        self.fc2 = nn.Linear(50, 10)
+        self.fc1 = nn.Linear(320, 10000)
+        self.fc2 = nn.Linear(10000, 2000)
+        self.fc3 = nn.Linear(2000, 10)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -60,8 +61,10 @@ class Netz(nn.Module):
         x = self.conv2(x)
         x = F.relu(F.max_pool2d(self.conv_drop(x), 2))
         x = x.view(-1, 320)
+        x = self.conv_drop(x)
         x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
         return F.log_softmax(x, dim=1)
 
 
